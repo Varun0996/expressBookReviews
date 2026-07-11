@@ -53,16 +53,16 @@ regd_users.post("/login", (req,res) => {
         req.session.authorization = {
             accessToken, username
         }
-        return res.status(200).send("User successfully logged in");
+        return res.status(200).send("User successfully logged in" + accessToken);
     } else {
         return res.status(208).json({ message: "Invalid Login. Check username and password" });
     }
 });
 
 // Add a book review
-regd_users.put("/review/:isbn", (req, res) => {
+regd_users.put("/auth/review/:isbn", (req, res) => {
   //Write your code here
-        const username = req.user;
+        const username = req.session.authorization.username;
         const isbn = req.params.isbn;
         const review = req.body.review;
 
@@ -71,20 +71,42 @@ regd_users.put("/review/:isbn", (req, res) => {
                 message: "Book not found"
             });
         }
-        console.log("here 1");
         if (!review) {
             return res.status(400).json({
                 message: "Review is required"
             });
         }
-        console.log("here 2");
         books[isbn].review = {
             [username]: review
         };
-        console.log("here 3");
+        
         res.status(200).json({
             message: "Review added successfully"
         });  
+});
+
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+  //Write your code here
+        const username = req.session.authorization.username;
+        const isbn = req.params.isbn;
+        const review = req.body.review;
+
+        if (!books[isbn]) {
+            return res.status(404).json({
+                message: "Book not found"
+            });
+        }
+        if (!books[isbn].review || !books[isbn].review[username]) {
+            return res.status(404).json({
+                message: "Review not found for this user"
+            });
+        }
+        
+        delete books[isbn].review[username];
+
+        res.status(200).json({
+            message: "Review deleted successfully"
+        }); 
 });
 
 module.exports.authenticated = regd_users;
